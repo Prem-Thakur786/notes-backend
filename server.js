@@ -11,11 +11,17 @@ dotenv.config();
 const app = express();
 
 app.use(cors({
-  origin: [
-    "http://localhost:5173",
-    "https://notes-management-frontend-phi.vercel.app",
-    process.env.FRONTEND_URL,
-  ].filter(Boolean),
+  origin: (origin, callback) => {
+    if (
+      !origin ||
+      origin.endsWith(".vercel.app") ||
+      origin.startsWith("http://localhost")
+    ) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
   credentials: true,
 }));
 
@@ -26,7 +32,6 @@ app.use("/api/notes", noteRoutes);
 
 app.get("/", (req, res) => res.json({ msg: "Notes API running ✅" }));
 
-// Connect MongoDB once
 let isConnected = false;
 const connectDB = async () => {
   if (isConnected) return;
