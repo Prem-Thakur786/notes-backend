@@ -10,21 +10,7 @@ dotenv.config();
 
 const app = express();
 
-app.use(cors({
-  origin: (origin, callback) => {
-    if (
-      !origin ||
-      origin.endsWith(".vercel.app") ||
-      origin.startsWith("http://localhost")
-    ) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
-  credentials: true,
-}));
-
+app.use(cors({ origin: "*" }));
 app.use(express.json());
 
 app.use("/api/auth", authRoutes);
@@ -32,17 +18,12 @@ app.use("/api/notes", noteRoutes);
 
 app.get("/", (req, res) => res.json({ msg: "Notes API running ✅" }));
 
-let isConnected = false;
-const connectDB = async () => {
-  if (isConnected) return;
-  await mongoose.connect(process.env.MONGO_URI, {
-    serverSelectionTimeoutMS: 10000,
-    socketTimeoutMS: 45000,
-  });
-  isConnected = true;
-  console.log("✅ MongoDB Connected");
-};
-
-connectDB().catch((err) => console.error("❌ MongoDB error:", err.message));
-
-export default app;
+mongoose
+  .connect(process.env.MONGO_URI)
+  .then(() => {
+    console.log("✅ MongoDB Connected");
+    app.listen(process.env.PORT || 5000, () =>
+      console.log(`🚀 Server running on http://localhost:${process.env.PORT || 5000}`)
+    );
+  })
+  .catch((err) => console.error("❌ MongoDB error:", err.message));
